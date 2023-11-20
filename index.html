@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="en">
+  <script>
+    (function () {
+      const e = () => {};
+      let t = null,
+        o = null,
+        n = [],
+        i = e,
+        r = e,
+        a = e,
+        s = e;
+      try {
+        (i = window.fetch),
+          (r = window.XMLHttpRequest.prototype.open),
+          (a = window.XMLHttpRequest.prototype.send),
+          (s = window.XMLHttpRequest.prototype.setRequestHeader);
+      } catch (e) {
+        0;
+      }
+      function c(e) {
+        return !(
+          !window.XMLHttpRequest ||
+          !window.XMLHttpRequest.prototype ||
+          "function" != typeof window.XMLHttpRequest.prototype[e]
+        );
+      }
+      function d() {
+        let e = [];
+        return {
+          subscribe: (t) => {
+            e.push(t);
+          },
+          next: (t) => {
+            e.length && e.forEach((e) => e(t));
+          },
+          clear: () => {
+            e.length = 0;
+          },
+        };
+      }
+      const l = new d(),
+        p = new WeakMap(),
+        u = new WeakMap(),
+        E = new WeakMap();
+      c("open") &&
+        c("send") &&
+        c("setRequestHeader") &&
+        ((window.XMLHttpRequest.prototype.open = function (...e) {
+          if (
+            (p.set(this, { method: (e[0] && e[0].toUpperCase()) || "GET" }),
+            !0 === this.__amicabletbecoxhro || "OFF" === t)
+          ) {
+            r.apply(this, e);
+            const t = u.get(this);
+            t && t.next();
+          } else {
+            const t = u.get(this) || new d();
+            u.set(this, t),
+              (this.__headersReady = (function (e, t) {
+                let o = null;
+                return () => {
+                  o && clearTimeout(o),
+                    (o = setTimeout(() => {
+                      e();
+                    }, t));
+                };
+              })(() => {
+                this.__onPendingHeadersSet && this.__onPendingHeadersSet();
+              }, 50)),
+              l.subscribe(() => {
+                c("open") &&
+                  window.XMLHttpRequest.prototype.open.apply(this, e);
+              });
+          }
+        }),
+        (window.XMLHttpRequest.prototype.setRequestHeader = function (...e) {
+          if (this.readyState === XMLHttpRequest.OPENED || "OFF" === t)
+            s.apply(this, e);
+          else {
+            E.set(this, !0);
+            const t = u.get(this);
+            t &&
+              t.subscribe(() => {
+                s.apply(this, e), this.__headersReady();
+              });
+          }
+        }),
+        (window.XMLHttpRequest.prototype.send = function (e) {
+          if (
+            (this.addEventListener("readystatechange", () => {
+              if ("OFF" !== o && this.readyState === XMLHttpRequest.DONE)
+                try {
+                  const t = p.get(this),
+                    i =
+                      (t &&
+                        "string" == typeof t.method &&
+                        t.method.toUpperCase()) ||
+                      "";
+                  let r,
+                    a = [];
+                  try {
+                    const e = this.getAllResponseHeaders();
+                    a = (e && e.trim().split(/[\r\n]+/)).reduce((e, t) => {
+                      try {
+                        const o = t.split(": "),
+                          n = o.shift(),
+                          i = o.join(": ");
+                        e.push({ active: !0, header: n, value: i });
+                      } catch (e) {}
+                      return e;
+                    }, []);
+                  } catch (e) {
+                    a = [];
+                  }
+                  try {
+                    r =
+                      "string" == typeof this.response
+                        ? this.response
+                        : JSON.stringify(this.response);
+                  } catch (e) {
+                    r = this.response;
+                  }
+                  const s = {
+                    type: "STASH_REQUESTS",
+                    payload: [
+                      [
+                        {
+                          method: i,
+                          requestURL: this.responseURL,
+                          responsePayload: r,
+                          requestPayload: e,
+                          status: this.status,
+                          timestamp: Date.now(),
+                          responseHeaders: a,
+                        },
+                      ],
+                    ],
+                  };
+                  "ON" === o
+                    ? window.postMessage(s, "*")
+                    : n.push(s.payload[0][0]);
+                } catch (e) {}
+            }),
+            "OFF" === t)
+          )
+            a.call(this, e);
+          else if (E.get(this))
+            this.__onPendingHeadersSet = () => {
+              E.delete(this),
+                c("send") &&
+                  this.readyState === XMLHttpRequest.OPENED &&
+                  window.XMLHttpRequest.prototype.send.call(this, e),
+                (this.__onPendingHeadersSet = null);
+            };
+          else if (
+            this.readyState === XMLHttpRequest.OPENED &&
+            !0 === this.__amicabletbebypoxhrs
+          ) {
+            Object.defineProperty(this, "readyState", {
+              writable: !0,
+              configurable: !0,
+              value: XMLHttpRequest.LOADING,
+            });
+            const e = new Event("readystatechange");
+            this.dispatchEvent(e);
+          } else if (
+            this.readyState === XMLHttpRequest.OPENED &&
+            !0 === this.__amicabletbecoxhrs
+          )
+            a.call(this, e);
+          else {
+            const t = u.get(this);
+            t &&
+              t.subscribe(() => {
+                c("send") &&
+                  this.readyState === XMLHttpRequest.OPENED &&
+                  window.XMLHttpRequest.prototype.send.call(this, e);
+              });
+          }
+        })),
+        (window.fetch = (...e) => {
+          const r = e[0];
+          let a = e[1];
+          const { url: s, method: c } = (function (e, t) {
+              let o,
+                n = "GET";
+              return (
+                "string" == typeof e
+                  ? ((o = e), (n = t?.method?.toUpperCase() || "GET"))
+                  : "string" == typeof e?.search
+                  ? ((o = e.toString()),
+                    (n = t?.method?.toUpperCase() || "GET"))
+                  : ((o = e.url || ""),
+                    (n = e?.method?.toUpperCase() || "GET")),
+                { method: n, url: o }
+              );
+            })(r, a),
+            d = (function (e, t) {
+              return new Promise((o) => {
+                if ("string" == typeof e || "string" == typeof e?.search) {
+                  const e = (t && t.body) || null;
+                  o(e);
+                } else
+                  try {
+                    e.clone()
+                      .text()
+                      .then((e) => {
+                        o(e);
+                      })
+                      .catch((e) => {
+                        o(null);
+                      });
+                  } catch (e) {
+                    o(null);
+                  }
+              });
+            })(r, a);
+          let p = !1;
+          try {
+            if ("string" == typeof a?.headers?.amicabletbecof)
+              switch (((p = !0), a?.headers?.amicabletbecof)) {
+                case "no-init":
+                  a = void 0;
+                  break;
+                case "no-headers":
+                  a.headers = void 0;
+                  break;
+                default:
+                  delete a.headers.amicabletbecof;
+              }
+          } catch (e) {
+            0;
+          }
+          return p || "OFF" === t
+            ? i(r, a).then(async (e) => {
+                if ("OFF" === o) return e;
+                try {
+                  const t = await d;
+                  let i;
+                  try {
+                    i = t.replace(/\s/gi, "");
+                  } catch (e) {
+                    i = t;
+                  }
+                  const r = e.clone(),
+                    a = await r.text();
+                  let l = [];
+                  try {
+                    for (const e of r?.headers?.entries()) {
+                      const t = e[0],
+                        o = e[1];
+                      l.push({ active: !0, header: t, value: o });
+                    }
+                  } catch (e) {
+                    l = [];
+                  }
+                  const p = {
+                    type: "STASH_REQUESTS",
+                    payload: [
+                      [
+                        {
+                          method: (c && c.toUpperCase()) || "GET",
+                          requestURL: s,
+                          responsePayload: a,
+                          requestPayload: i,
+                          responseHeaders: l,
+                          status: e.status,
+                          timestamp: Date.now(),
+                        },
+                      ],
+                    ],
+                  };
+                  "ON" === o
+                    ? window.postMessage(p, "*")
+                    : n.push(p.payload[0][0]);
+                } catch (e) {}
+                return e;
+              })
+            : ((...e) =>
+                new Promise((t) => {
+                  l.subscribe(() => {
+                    t(window.fetch(...e));
+                  });
+                }))(...e);
+        }),
+        l.subscribe(() => {
+          try {
+            window.postMessage({
+              type: "__TWEAK_BOOTSTRAP_FINISHED__",
+              payload: [],
+            });
+          } catch (e) {
+            0;
+          }
+        });
+      const h = ["ON", "OFF"];
+      setTimeout(() => {
+        (t && h.includes(t)) || ((t = "OFF"), l.next());
+      }, 5e3),
+        (window.__onttis = (e) => {
+          e &&
+            h.includes(e) &&
+            (t && h.includes(t) ? (t = e) : ((t = e), l.next()));
+        }),
+        (window.__onttss__ = (e, t) => {
+          if (e && h.includes(e)) {
+            if ("OFF" === e && "user" === t && n.length) n = [];
+            else if ("ON" === e && "system" === t && n.length)
+              try {
+                window.postMessage({ type: "STASH_REQUESTS", payload: [n] });
+              } catch (e) {
+                0;
+              }
+            (n = []), (o = e);
+          }
+        }),
+        (window.__textm__ = "c2");
+    })();
+  </script>
+  <script
+    id="__tweak_browser_extension_intercept_script__"
+    async="false"
+    defer="false"
+    src="assets/intercept.bundle.js"
+  ></script>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <title>
+      Topup Game dan Pulsa Termurah Tercepat Terpercaya - Winky Games
+    </title>
+    <meta
+      name="description"
+      content="Winky Games adalah situs topup game dan pulsa yang paling murah, paling cepat dan paling terpercaya."
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="index, follow" />
+    <meta charset="UTF-8" />
+    <meta
+      property="og:url"
+      content="https://www.klastergames.com?aff=081336611571"
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:title"
+      content="Topup Game dan Pulsa Termurah Tercepat Terpercaya - Winky Games"
+    />
+    <meta
+      property="og:description"
+      content="Winky Games adalah situs topup game dan pulsa yang paling murah, paling cepat dan paling terpercaya."
+    />
+    <meta
+      property="og:image"
+      content="https://www.klastergames.com/_next/image?url=%2Fstatic%2Fbanners%2Fhome-banner-klaster-games.png&amp;w=3840&amp;q=75"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta property="twitter:domain" content="klastergames.com" />
+    <meta
+      property="twitter:url"
+      content="https://www.klastergames.com?aff=081336611571"
+    />
+    <meta
+      name="twitter:title"
+      content="Topup Game dan Pulsa Termurah Tercepat Terpercaya - Winky Games"
+    />
+    <meta
+      name="twitter:description"
+      content="Winky Games adalah situs topup game dan pulsa yang paling murah, paling cepat dan paling terpercaya."
+    />
+    <meta
+      name="twitter:image"
+      content="https://www.klastergames.com/_next/image?url=%2Fstatic%2Fbanners%2Fhome-banner-klaster-games.png&amp;w=3840&amp;q=75"
+    />
+    <meta name="next-head-count" content="16" />
+    <link rel="preload" href="assets/fc7fc361dd13a868.css" as="style" />
+    <link rel="stylesheet" href="assets/fc7fc361dd13a868.css" data-n-g="" />
+    <noscript data-n-css=""></noscript>
+    <script
+      defer="defer"
+      nomodule=""
+      src="assets/polyfills-c67a75d1b6f99dc8.js"
+    ></script>
+    <script src="assets/webpack-38cee4c0e358b1a3.js" defer="defer"></script>
+    <script src="assets/framework-114634acb84f8baa.js" defer="defer"></script>
+    <script src="assets/main-6f971a247b94ea6f.js" defer="defer"></script>
+    <script src="assets/_app-c9555c1b3104629c.js" defer="defer"></script>
+    <script src="assets/600-d0a8db6e5941951b.js" defer="defer"></script>
+    <script src="assets/index-f6310e0a94763d9e.js" defer="defer"></script>
+    <script src="assets/_buildManifest.js" defer="defer"></script>
+    <script src="assets/_ssgManifest.js" defer="defer"></script>
+    <link
+      as="script"
+      rel="prefetch"
+      href="assets/29107295-8619d3a1a46e5850.js"
+    />
+    <link as="script" rel="prefetch" href="assets/789-ad19dbe9e43b2c08.js" />
+    <link
+      as="script"
+      rel="prefetch"
+      href="assets/[gameSlug]-56d57df1ab0ed32b.js"
+    />
+    <link
+      as="script"
+      rel="prefetch"
+      href="https://www.klastergames.com/_next/static/chunks/pages/transactions-2a847ca82c9b9978.js"
+    />
+    <link
+      as="script"
+      rel="prefetch"
+      href="https://www.klastergames.com/_next/static/chunks/914-c12408523f24cd5c.js"
+    />
+    <link
+      as="script"
+      rel="prefetch"
+      href="https://www.klastergames.com/_next/static/chunks/pages/deposit-7fdd4753bcd66143.js"
+    />
+    <link
+      as="script"
+      rel="prefetch"
+      href="https://www.klastergames.com/_next/static/chunks/pages/informations-68e69512743d5ee1.js"
+    />
+  </head>
+  <body
+    class="bg-gray-600 text-sm leading-5"
+    data-new-gr-c-s-check-loaded="8.909.0"
+    data-gr-ext-installed=""
+    data-new-gr-c-s-loaded="8.909.0"
+  >
+    <div id="__next">
+      <div class="app-container m-auto bg-white min-h-screen pb-12">
+        <div class="min-h-screen">
+          <div>
+            <div class="bg-[#529e52] text-white">
+              <div class="font-logo text-base font-bold py-3 px-5">
+                <h1>Winky Games - Termurah Terpercaya</h1>
+              </div>
+              <div class="w-full relative aspect-[1.91/1]">
+                <img
+                  alt="Tempat Topup Termurah - Anti Minus &amp; Jaminan Uang Kembali 2x Lipat"
+                  sizes="100vw"
+                  srcset="
+                    assets/home-banner-klaster-games_006.webp  640w,
+                    assets/home-banner-klaster-games_008.webp  750w,
+                    assets/home-banner-klaster-games_004.webp  828w,
+                    assets/home-banner-klaster-games_005.webp 1080w,
+                    assets/home-banner-klaster-games_002.webp 1200w,
+                    assets/home-banner-klaster-games.webp     1920w,
+                    assets/home-banner-klaster-games_007.webp 2048w,
+                    assets/home-banner-klaster-games_003.webp 3840w
+                  "
+                  src="assets/home-banner-klaster-games_003.webp"
+                  decoding="async"
+                  data-nimg="fill"
+                  loading="lazy"
+                  style="
+                    position: absolute;
+                    height: 100%;
+                    width: 100%;
+                    left: 0;
+                    top: 0;
+                    right: 0;
+                    bottom: 0;
+                    object-fit: contain;
+                    color: transparent;
+                  "
+                />
+              </div>
+            </div>
+
+            <div class="pb-10">
+              <div
+                class="m-5 px-3 py-2 bg-gray-100 border-l-4 border-l-green-300 font-semibold"
+              >
+                Topup Games
+              </div>
+              <div class="grid grid-cols-3 gap-4 px-5 pb-4">
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/mobile-legends-bang-bang?aff=081336611571"
+                    ><img
+                      alt="Topup Mobile Legends: Bang Bang Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/mobile-legends_008.webp  640w,
+                        assets/mobile-legends_007.webp  750w,
+                        assets/mobile-legends_004.webp  828w,
+                        assets/mobile-legends_005.webp 1080w,
+                        assets/mobile-legends_002.webp 1200w,
+                        assets/mobile-legends_003.webp 1920w,
+                        assets/mobile-legends_006.webp 2048w,
+                        assets/mobile-legends.webp     3840w
+                      "
+                      src="assets/mobile-legends.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/mobile-legends-bang-bang?aff=081336611571"
+                    >Mobile Legends: Bang Bang</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/free-fire?aff=081336611571"
+                    ><img
+                      alt="Topup Free Fire Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/free-fire_007.webp  640w,
+                        assets/free-fire_008.webp  750w,
+                        assets/free-fire_005.webp  828w,
+                        assets/free-fire_004.webp 1080w,
+                        assets/free-fire_003.webp 1200w,
+                        assets/free-fire_002.webp 1920w,
+                        assets/free-fire_006.webp 2048w,
+                        assets/free-fire.webp     3840w
+                      "
+                      src="assets/free-fire.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/free-fire?aff=081336611571"
+                    >Free Fire</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/genshin-impact?aff=081336611571"
+                    ><img
+                      alt="Topup Genshin Impact Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/genshin-impact_007.webp  640w,
+                        assets/genshin-impact_006.webp  750w,
+                        assets/genshin-impact_004.webp  828w,
+                        assets/genshin-impact_005.webp 1080w,
+                        assets/genshin-impact_002.webp 1200w,
+                        assets/genshin-impact_003.webp 1920w,
+                        assets/genshin-impact_008.webp 2048w,
+                        assets/genshin-impact.webp     3840w
+                      "
+                      src="assets/genshin-impact.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/genshin-impact?aff=081336611571"
+                    >Genshin Impact</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/valorant?aff=081336611571"
+                    ><img
+                      alt="Topup Valorant Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/valorant_006.webp  640w,
+                        assets/valorant_007.webp  750w,
+                        assets/valorant_005.webp  828w,
+                        assets/valorant_004.webp 1080w,
+                        assets/valorant_002.webp 1200w,
+                        assets/valorant.webp     1920w,
+                        assets/valorant_008.webp 2048w,
+                        assets/valorant_003.webp 3840w
+                      "
+                      src="assets/valorant_003.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/valorant?aff=081336611571"
+                    >Valorant</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/super-sus?aff=081336611571"
+                    ><img
+                      alt="Topup Super Sus Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/super-sus_007.webp  640w,
+                        assets/super-sus_006.webp  750w,
+                        assets/super-sus_005.webp  828w,
+                        assets/super-sus_004.webp 1080w,
+                        assets/super-sus.webp     1200w,
+                        assets/super-sus_003.webp 1920w,
+                        assets/super-sus_008.webp 2048w,
+                        assets/super-sus_002.webp 3840w
+                      "
+                      src="assets/super-sus_002.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/super-sus?aff=081336611571"
+                    >Super Sus</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/call-of-duty-mobile?aff=081336611571"
+                    ><img
+                      alt="Topup Call Of Duty Mobile Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/call-of-duty-mobile_006.webp  640w,
+                        assets/call-of-duty-mobile_008.webp  750w,
+                        assets/call-of-duty-mobile_004.webp  828w,
+                        assets/call-of-duty-mobile_005.webp 1080w,
+                        assets/call-of-duty-mobile.webp     1200w,
+                        assets/call-of-duty-mobile_003.webp 1920w,
+                        assets/call-of-duty-mobile_007.webp 2048w,
+                        assets/call-of-duty-mobile_002.webp 3840w
+                      "
+                      src="assets/call-of-duty-mobile_002.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/call-of-duty-mobile?aff=081336611571"
+                    >Call Of Duty Mobile</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/arena-of-valor?aff=081336611571"
+                    ><img
+                      alt="Topup Arena Of Valor Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/arena-of-valor_007.webp  640w,
+                        assets/arena-of-valor_008.webp  750w,
+                        assets/arena-of-valor_005.webp  828w,
+                        assets/arena-of-valor_004.webp 1080w,
+                        assets/arena-of-valor_002.webp 1200w,
+                        assets/arena-of-valor.webp     1920w,
+                        assets/arena-of-valor_006.webp 2048w,
+                        assets/arena-of-valor_003.webp 3840w
+                      "
+                      src="assets/arena-of-valor_003.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/arena-of-valor?aff=081336611571"
+                    >Arena Of Valor</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/fc-mobile?aff=081336611571"
+                    ><img
+                      alt="Topup FC Mobile Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/fc-mobile_008.webp  640w,
+                        assets/fc-mobile_006.webp  750w,
+                        assets/fc-mobile_004.webp  828w,
+                        assets/fc-mobile_005.webp 1080w,
+                        assets/fc-mobile_003.webp 1200w,
+                        assets/fc-mobile.webp     1920w,
+                        assets/fc-mobile_007.webp 2048w,
+                        assets/fc-mobile_002.webp 3840w
+                      "
+                      src="assets/fc-mobile_002.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/fc-mobile?aff=081336611571"
+                    >FC Mobile</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/garena-undawn-indonesia?aff=081336611571"
+                    ><img
+                      alt="Topup Garena Undawn ID Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/garena-undawn_006.webp  640w,
+                        assets/garena-undawn_007.webp  750w,
+                        assets/garena-undawn_005.webp  828w,
+                        assets/garena-undawn_004.webp 1080w,
+                        assets/garena-undawn.webp     1200w,
+                        assets/garena-undawn_003.webp 1920w,
+                        assets/garena-undawn_008.webp 2048w,
+                        assets/garena-undawn_002.webp 3840w
+                      "
+                      src="assets/garena-undawn_002.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/garena-undawn-indonesia?aff=081336611571"
+                    >Garena Undawn ID</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/honkai-star-rail?aff=081336611571"
+                    ><img
+                      alt="Topup Honkai Star Rail Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/honkai-star-rail_007.webp  640w,
+                        assets/honkai-star-rail_008.webp  750w,
+                        assets/honkai-star-rail_004.webp  828w,
+                        assets/honkai-star-rail_005.webp 1080w,
+                        assets/honkai-star-rail_003.webp 1200w,
+                        assets/honkai-star-rail_002.webp 1920w,
+                        assets/honkai-star-rail_006.webp 2048w,
+                        assets/honkai-star-rail.webp     3840w
+                      "
+                      src="assets/honkai-star-rail.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/honkai-star-rail?aff=081336611571"
+                    >Honkai Star Rail</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/metal-slug-awekening?aff=081336611571"
+                    ><img
+                      alt="Topup Metal Slug Awekening Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/metal-slug-awekening_007.webp  640w,
+                        assets/metal-slug-awekening_006.webp  750w,
+                        assets/metal-slug-awekening_005.webp  828w,
+                        assets/metal-slug-awekening_004.webp 1080w,
+                        assets/metal-slug-awekening_003.webp 1200w,
+                        assets/metal-slug-awekening_002.webp 1920w,
+                        assets/metal-slug-awekening_008.webp 2048w,
+                        assets/metal-slug-awekening.webp     3840w
+                      "
+                      src="assets/metal-slug-awekening.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/metal-slug-awekening?aff=081336611571"
+                    >Metal Slug Awekening</a
+                  >
+                </div>
+              </div>
+              <div
+                class="m-5 px-3 py-2 bg-gray-100 border-l-4 border-l-green-300 font-semibold"
+              >
+                Isi Pulsa
+              </div>
+              <div class="grid grid-cols-3 gap-4 px-5 pb-4">
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/pulsa-tri?aff=081336611571"
+                    ><img
+                      alt="Topup Pulsa Tri Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/tri_007.webp  640w,
+                        assets/tri_006.webp  750w,
+                        assets/tri_004.webp  828w,
+                        assets/tri_005.webp 1080w,
+                        assets/tri_003.webp 1200w,
+                        assets/tri_002.webp 1920w,
+                        assets/tri_008.webp 2048w,
+                        assets/tri.webp     3840w
+                      "
+                      src="assets/tri.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/pulsa-tri?aff=081336611571"
+                    >Pulsa Tri</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/pulsa-telkomsel?aff=081336611571"
+                    ><img
+                      alt="Topup Pulsa Telkomsel Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/telkomsel_008.webp  640w,
+                        assets/telkomsel_007.webp  750w,
+                        assets/telkomsel_004.webp  828w,
+                        assets/telkomsel_005.webp 1080w,
+                        assets/telkomsel_003.webp 1200w,
+                        assets/telkomsel_002.webp 1920w,
+                        assets/telkomsel_006.webp 2048w,
+                        assets/telkomsel.webp     3840w
+                      "
+                      src="assets/telkomsel.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/pulsa-telkomsel?aff=081336611571"
+                    >Pulsa Telkomsel</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/pulsa-indosat?aff=081336611571"
+                    ><img
+                      alt="Topup Pulsa Indosat Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/indosat_008.webp  640w,
+                        assets/indosat_006.webp  750w,
+                        assets/indosat_005.webp  828w,
+                        assets/indosat_004.webp 1080w,
+                        assets/indosat_003.webp 1200w,
+                        assets/indosat_002.webp 1920w,
+                        assets/indosat_007.webp 2048w,
+                        assets/indosat.webp     3840w
+                      "
+                      src="assets/indosat.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/pulsa-indosat?aff=081336611571"
+                    >Pulsa Indosat</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/pulsa-axis?aff=081336611571"
+                    ><img
+                      alt="Topup Pulsa Axis Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/axis_007.webp  640w,
+                        assets/axis_008.webp  750w,
+                        assets/axis_004.webp  828w,
+                        assets/axis_005.webp 1080w,
+                        assets/axis_002.webp 1200w,
+                        assets/axis_003.webp 1920w,
+                        assets/axis_006.webp 2048w,
+                        assets/axis.webp     3840w
+                      "
+                      src="assets/axis.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/pulsa-axis?aff=081336611571"
+                    >Pulsa Axis</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/pulsa-xl?aff=081336611571"
+                    ><img
+                      alt="Topup Pulsa XL Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/xl_007.webp  640w,
+                        assets/xl_008.webp  750w,
+                        assets/xl_005.webp  828w,
+                        assets/xl_004.webp 1080w,
+                        assets/xl_003.webp 1200w,
+                        assets/xl_002.webp 1920w,
+                        assets/xl_006.webp 2048w,
+                        assets/xl.webp     3840w
+                      "
+                      src="assets/xl.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/pulsa-xl?aff=081336611571"
+                    >Pulsa XL</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/pulsa-smartfren?aff=081336611571"
+                    ><img
+                      alt="Topup Pulsa Smartfren Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/smartfren_008.webp  640w,
+                        assets/smartfren_007.webp  750w,
+                        assets/smartfren_004.webp  828w,
+                        assets/smartfren_005.webp 1080w,
+                        assets/smartfren_003.webp 1200w,
+                        assets/smartfren_002.webp 1920w,
+                        assets/smartfren_006.webp 2048w,
+                        assets/smartfren.webp     3840w
+                      "
+                      src="assets/smartfren.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/pulsa-smartfren?aff=081336611571"
+                    >Pulsa Smartfren</a
+                  >
+                </div>
+              </div>
+              <div
+                class="m-5 px-3 py-2 bg-gray-100 border-l-4 border-l-green-300 font-semibold"
+              >
+                Topup eMoney
+              </div>
+              <div class="grid grid-cols-3 gap-4 px-5 pb-4">
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/saldo-gopay?aff=081336611571"
+                    ><img
+                      alt="Topup Saldo Gopay Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/saldo-gopay_006.webp  640w,
+                        assets/saldo-gopay_008.webp  750w,
+                        assets/saldo-gopay_005.webp  828w,
+                        assets/saldo-gopay_004.webp 1080w,
+                        assets/saldo-gopay_003.webp 1200w,
+                        assets/saldo-gopay_002.webp 1920w,
+                        assets/saldo-gopay_007.webp 2048w,
+                        assets/saldo-gopay.webp     3840w
+                      "
+                      src="assets/saldo-gopay.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/saldo-gopay?aff=081336611571"
+                    >Saldo Gopay</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/saldo-dana?aff=081336611571"
+                    ><img
+                      alt="Topup Saldo DANA Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/saldo-dana_006.webp  640w,
+                        assets/saldo-dana_007.webp  750w,
+                        assets/saldo-dana_004.webp  828w,
+                        assets/saldo-dana_005.webp 1080w,
+                        assets/saldo-dana_002.webp 1200w,
+                        assets/saldo-dana_003.webp 1920w,
+                        assets/saldo-dana_008.webp 2048w,
+                        assets/saldo-dana.webp     3840w
+                      "
+                      src="assets/saldo-dana.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/saldo-dana?aff=081336611571"
+                    >Saldo DANA</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/saldo-shopeepay?aff=081336611571"
+                    ><img
+                      alt="Topup Saldo ShopeePay Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/saldo-shopeepay_008.webp  640w,
+                        assets/saldo-shopeepay_006.webp  750w,
+                        assets/saldo-shopeepay_005.webp  828w,
+                        assets/saldo-shopeepay_004.webp 1080w,
+                        assets/saldo-shopeepay_003.webp 1200w,
+                        assets/saldo-shopeepay_002.webp 1920w,
+                        assets/saldo-shopeepay_007.webp 2048w,
+                        assets/saldo-shopeepay.webp     3840w
+                      "
+                      src="assets/saldo-shopeepay.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/saldo-shopeepay?aff=081336611571"
+                    >Saldo ShopeePay</a
+                  >
+                </div>
+              </div>
+              <div
+                class="m-5 px-3 py-2 bg-gray-100 border-l-4 border-l-green-300 font-semibold"
+              >
+                Voucher
+              </div>
+              <div class="grid grid-cols-3 gap-4 px-5 pb-4">
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/steam-wallet-voucher-idr?aff=081336611571"
+                    ><img
+                      alt="Topup Steam Wallet Voucher (IDR) Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/steam-wallet_006.webp  640w,
+                        assets/steam-wallet_007.webp  750w,
+                        assets/steam-wallet_005.webp  828w,
+                        assets/steam-wallet_004.webp 1080w,
+                        assets/steam-wallet_003.webp 1200w,
+                        assets/steam-wallet_002.webp 1920w,
+                        assets/steam-wallet_008.webp 2048w,
+                        assets/steam-wallet.webp     3840w
+                      "
+                      src="assets/steam-wallet.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/steam-wallet-voucher-idr?aff=081336611571"
+                    >Steam Wallet Voucher (IDR)</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/google-play-voucher-indonesia?aff=081336611571"
+                    ><img
+                      alt="Topup Google Play Voucher ID Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/google-play-voucher_007.webp  640w,
+                        assets/google-play-voucher_005.webp  750w,
+                        assets/google-play-voucher_006.webp  828w,
+                        assets/google-play-voucher_004.webp 1080w,
+                        assets/google-play-voucher_003.webp 1200w,
+                        assets/google-play-voucher_002.webp 1920w,
+                        assets/google-play-voucher_008.webp 2048w,
+                        assets/google-play-voucher.webp     3840w
+                      "
+                      src="assets/google-play-voucher.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/google-play-voucher-indonesia?aff=081336611571"
+                    >Google Play Voucher ID</a
+                  >
+                </div>
+              </div>
+              <div
+                class="m-5 px-3 py-2 bg-gray-100 border-l-4 border-l-green-300 font-semibold"
+              >
+                Lainnya
+              </div>
+              <div class="grid grid-cols-3 gap-4 px-5 pb-4">
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/lita-coins?aff=081336611571"
+                    ><img
+                      alt="Topup Lita Coins Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/lita_008.webp  640w,
+                        assets/lita_007.webp  750w,
+                        assets/lita_004.webp  828w,
+                        assets/lita_005.webp 1080w,
+                        assets/lita_003.webp 1200w,
+                        assets/lita_002.webp 1920w,
+                        assets/lita_006.webp 2048w,
+                        assets/lita.webp     3840w
+                      "
+                      src="assets/lita.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/lita-coins?aff=081336611571"
+                    >Lita Coins</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/bigo-live?aff=081336611571"
+                    ><img
+                      alt="Topup Bigo Live Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/bigo-live_007.webp  640w,
+                        assets/bigo-live_008.webp  750w,
+                        assets/bigo-live_005.webp  828w,
+                        assets/bigo-live_004.webp 1080w,
+                        assets/bigo-live_002.webp 1200w,
+                        assets/bigo-live_003.webp 1920w,
+                        assets/bigo-live_006.webp 2048w,
+                        assets/bigo-live.webp     3840w
+                      "
+                      src="assets/bigo-live.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/bigo-live?aff=081336611571"
+                    >Bigo Live</a
+                  >
+                </div>
+                <div
+                  class="rounded-lg overflow-hidden text-center bg-gray-200 border shadow-md flex flex-col"
+                >
+                  <a
+                    class="block relative aspect-square"
+                    href="https://www.klastergames.com/token-listrik-pln?aff=081336611571"
+                    ><img
+                      alt="Topup Token Listrik PLN Termurah Terpercaya"
+                      sizes="100vw"
+                      srcset="
+                        assets/token-listrik-pln_008.webp  640w,
+                        assets/token-listrik-pln_006.webp  750w,
+                        assets/token-listrik-pln_005.webp  828w,
+                        assets/token-listrik-pln_004.webp 1080w,
+                        assets/token-listrik-pln_003.webp 1200w,
+                        assets/token-listrik-pln_002.webp 1920w,
+                        assets/token-listrik-pln_007.webp 2048w,
+                        assets/token-listrik-pln.webp     3840w
+                      "
+                      src="assets/token-listrik-pln.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        color: transparent;
+                        background-color: #fff;
+                      " /></a
+                  ><a
+                    class="py-2 px-3 flex w-full justify-center font-semibold flex-grow items-center text-2xs leading-5"
+                    href="https://www.klastergames.com/token-listrik-pln?aff=081336611571"
+                    >Token Listrik PLN</a
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="p-5 bg-gray-100 text-gray-400">
+              <h2 class="mb-3 text-gray-500">
+                Topup Game dan Pulsa Termurah Tercepat Terpercaya
+              </h2>
+              <p class="text-xs">
+                Winky Games adalah situs topup game dan pulsa yang paling murah,
+                paling cepat dan paling terpercaya. Sistem kami dapat melayani
+                transaksi Anda hanya dalam hitungan 1-3 detik dan juga hampir
+                tidak pernah delay walau traffic tinggi atau event besar.
+              </p>
+            </div>
+            <div class="p-5 pb-8 bg-gray-700 text-gray-400 text-xs">
+              <a
+                class="text-sm bg-gray-800 text-gray-300 p-3 px-4 rounded-md flex w-full items-center"
+                target="_blank"
+                rel="noreferrer"
+                href="https://chat.whatsapp.com/JybV0srYXIH6PiYYi1dGPX"
+                ><div class="relative aspect-square w-[16px] mr-2">
+                  <img
+                    alt="Gabung Grup Winky Games WhatsApp"
+                    sizes="100vw"
+                    srcset="
+                      assets/whatsapp-icon-white_006.webp  640w,
+                      assets/whatsapp-icon-white_007.webp  750w,
+                      assets/whatsapp-icon-white_005.webp  828w,
+                      assets/whatsapp-icon-white_004.webp 1080w,
+                      assets/whatsapp-icon-white_002.webp 1200w,
+                      assets/whatsapp-icon-white_003.webp 1920w,
+                      assets/whatsapp-icon-white_008.webp 2048w,
+                      assets/whatsapp-icon-white.webp     3840w
+                    "
+                    src="assets/whatsapp-icon-white.webp"
+                    decoding="async"
+                    data-nimg="fill"
+                    loading="lazy"
+                    style="
+                      position: absolute;
+                      height: 100%;
+                      width: 100%;
+                      left: 0;
+                      top: 0;
+                      right: 0;
+                      bottom: 0;
+                      object-fit: contain;
+                      color: transparent;
+                    "
+                  />
+                </div>
+                <div>Gabung Grup Gratis</div></a
+              >
+              <hr class="border-gray-600 my-3" />
+              <h2 class="font-semibold text-sm mb-3">Hubungi Winky Games</h2>
+              <div class="mb-2">
+                WhatsApp -<!-- -->
+                <a
+                  target="_blank"
+                  rel="noreferrer"
+                  class="underline font-semibold"
+                  href="https://wa.me/6281336611571"
+                  >0813-3661-1571</a
+                >
+              </div>
+              <div class="mb-2">
+                Facebook -<!-- -->
+                <a
+                  target="_blank"
+                  rel="noreferrer"
+                  class="underline font-semibold"
+                  href="https://www.facebook.com/Winkyfuu"
+                  >Winkyfuu</a
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="fixed bottom-0 left-0 right-0 z-10">
+          <div class="app-container m-auto px-5 py-3 border-t bg-[#e6eee1]">
+            <div class="flex items-center justify-around">
+              <div class="flex justify-center items-center">
+                <a href="https://www.klastergames.com/?aff=081336611571"
+                  ><div class="block relative aspect-square h-4 m-auto">
+                    <img
+                      alt="Halaman Awal Winky Games"
+                      sizes="100vw"
+                      srcset="
+                        assets/home_007.webp  640w,
+                        assets/home_008.webp  750w,
+                        assets/home_005.webp  828w,
+                        assets/home_006.webp 1080w,
+                        assets/home_003.webp 1200w,
+                        assets/home.webp     1920w,
+                        assets/home_002.webp 2048w,
+                        assets/home_004.webp 3840w
+                      "
+                      src="assets/home_004.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        object-fit: contain;
+                        color: transparent;
+                      "
+                    />
+                  </div>
+                  <div class="text-2xs">Beranda</div></a
+                >
+              </div>
+              <div class="flex justify-center items-center">
+                <a
+                  href="https://www.klastergames.com/transactions?aff=081336611571"
+                  ><div class="block relative aspect-square h-4 m-auto">
+                    <img
+                      alt="Halaman Transaksi Winky Games"
+                      sizes="100vw"
+                      srcset="
+                        assets/bill_007.webp  640w,
+                        assets/bill_008.webp  750w,
+                        assets/bill_006.webp  828w,
+                        assets/bill_005.webp 1080w,
+                        assets/bill_004.webp 1200w,
+                        assets/bill_002.webp 1920w,
+                        assets/bill.webp     2048w,
+                        assets/bill_003.webp 3840w
+                      "
+                      src="assets/bill_003.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        object-fit: contain;
+                        color: transparent;
+                      "
+                    />
+                  </div>
+                  <div class="text-2xs">Transaksi</div></a
+                >
+              </div>
+              <div class="flex justify-center items-center">
+                <a href="https://www.klastergames.com/deposit?aff=081336611571"
+                  ><div class="block relative aspect-square h-4 m-auto">
+                    <img
+                      alt="Halaman Deposit Winky Games"
+                      sizes="100vw"
+                      srcset="
+                        assets/wallet_008.webp  640w,
+                        assets/wallet_007.webp  750w,
+                        assets/wallet_005.webp  828w,
+                        assets/wallet_006.webp 1080w,
+                        assets/wallet_004.webp 1200w,
+                        assets/wallet.webp     1920w,
+                        assets/wallet_003.webp 2048w,
+                        assets/wallet_002.webp 3840w
+                      "
+                      src="assets/wallet_002.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        object-fit: contain;
+                        color: transparent;
+                      "
+                    />
+                  </div>
+                  <div class="text-2xs">Deposit</div></a
+                >
+              </div>
+              <div class="flex justify-center items-center">
+                <a
+                  href="https://www.klastergames.com/informations?aff=081336611571"
+                  ><div class="block relative aspect-square h-4 m-auto">
+                    <img
+                      alt="Halaman Informasi Winky Games"
+                      sizes="100vw"
+                      srcset="
+                        assets/info_008.webp  640w,
+                        assets/info_007.webp  750w,
+                        assets/info_006.webp  828w,
+                        assets/info_004.webp 1080w,
+                        assets/info.webp     1200w,
+                        assets/info_005.webp 1920w,
+                        assets/info_003.webp 2048w,
+                        assets/info_002.webp 3840w
+                      "
+                      src="assets/info_002.webp"
+                      decoding="async"
+                      data-nimg="fill"
+                      loading="lazy"
+                      style="
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        left: 0;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        object-fit: contain;
+                        color: transparent;
+                      "
+                    />
+                  </div>
+                  <div class="text-2xs">Informasi</div></a
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <next-route-announcer
+      ><p
+        aria-live="assertive"
+        id="__next-route-announcer__"
+        role="alert"
+        style="
+          border: 0px;
+          clip: rect(0px, 0px, 0px, 0px);
+          height: 1px;
+          margin: -1px;
+          overflow: hidden;
+          padding: 0px;
+          position: absolute;
+          width: 1px;
+          white-space: nowrap;
+          overflow-wrap: normal;
+        "
+      ></p
+    ></next-route-announcer>
+    <script src="assets/29107295-8619d3a1a46e5850.js"></script>
+    <script src="assets/789-ad19dbe9e43b2c08.js"></script>
+    <script src="assets/[gameSlug]-56d57df1ab0ed32b.js"></script>
+    <script src="/_next/static/chunks/pages/informations-68e69512743d5ee1.js"></script>
+  </body>
+  <grammarly-desktop-integration
+    data-grammarly-shadow-root="true"
+  ></grammarly-desktop-integration>
+</html>
